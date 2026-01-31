@@ -4,10 +4,112 @@ from torch.utils.data import DataLoader, DistributedSampler
 from functools import partial
 
 ASSISTANT_TAG = "\n\nAssistant:"
+HUMAN_TAG = "\n\nHuman:"
+
 
 # delete the \n at the beginning of the response
-def strip_one_leading_newline(s): 
+def strip_one_leading_newline(s):
     return s[1:] if s.startswith("\n") else s
+
+
+def parse_hh_to_messages(hh_text):
+    """
+    Parse HH format text into a list of messages.
+
+    Input: "\n\nHuman: Hello\n\nAssistant: Hi\n\nHuman: How are you?\n\nAssistant: Good"
+    Output: [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi"},
+        {"role": "user", "content": "How are you?"},
+        {"role": "assistant", "content": "Good"}
+    ]
+    """
+    hh_text = str(hh_text).replace("\r\n", "\n").replace("\r", "\n")
+    messages = []
+
+    # Split by Human tag first, then process each segment
+    # Remove empty first segment if text starts with tag
+    if hh_text.startswith(HUMAN_TAG):
+        hh_text = hh_text[len(HUMAN_TAG) :]
+
+    # Split by human turns
+    human_turns = hh_text.split(HUMAN_TAG)
+
+    for turn in human_turns:
+        if not turn.strip():
+            continue
+
+        # Each turn may contain an assistant response
+        if ASSISTANT_TAG in turn:
+            human_part, assistant_part = turn.split(ASSISTANT_TAG, 1)
+            if human_part.strip():
+                messages.append({"role": "user", "content": human_part.strip()})
+            if assistant_part.strip():
+                messages.append(
+                    {"role": "assistant", "content": assistant_part.strip()}
+                )
+        else:
+            # Only human part (final turn before response)
+            if turn.strip():
+                messages.append({"role": "user", "content": turn.strip()})
+
+    return messages
+
+
+def apply_chat_template_to_triplet(triplet, tokenizer):
+    """
+    Convert a HH triplet to chat template format.
+
+    Input triplet: {prompt, chosen, rejected} in HH format
+    Output triplet: {prompt, chosen, rejected} in chat template format
+
+    The prompt is the conversation history ending with the assistant turn marker.
+    chosen/rejected are the final assistant responses.
+    """
+    prompt_text = triplet["prompt"]
+    chosen_text = triplet["chosen"]
+    rejected_text = triplet["rejected"]
+
+    # Parse prompt into messages (removes the final Assistant: tag)
+    prompt_messages = parse_hh_to_messages(prompt_text)
+
+    # Create full conversation for chosen/rejected
+    chosen_messages = prompt_messages + [
+        {"role": "assistant", "content": chosen_text.strip()}
+    ]
+    rejected_messages = prompt_messages + [
+        {"role": "assistant", "content": rejected_text.strip()}
+    ]
+
+    # Apply chat template - get the prompt part (without final response)
+    # We need to format the prompt without the response first
+    prompt_formatted = tokenizer.apply_chat_template(
+        prompt_messages,
+        tokenize=False,
+        add_generation_prompt=True,  # Adds the assistant header for generation
+    )
+
+    # Get full chosen conversation (prompt + chosen response)
+    chosen_formatted = tokenizer.apply_chat_template(
+        chosen_messages, tokenize=False, add_generation_prompt=False
+    )
+
+    # Get full rejected conversation (prompt + rejected response)
+    rejected_formatted = tokenizer.apply_chat_template(
+        rejected_messages, tokenize=False, add_generation_prompt=False
+    )
+
+    # Extract just the response part (remove prompt from full text)
+    # The chosen/rejected should be just the response portion
+    chosen_response = chosen_formatted[len(prompt_formatted) :]
+    rejected_response = rejected_formatted[len(prompt_formatted) :]
+
+    return {
+        "prompt": prompt_formatted,
+        "chosen": chosen_response,
+        "rejected": rejected_response,
+    }
+
 
 def split_prompt_and_response(input_text):
     """
@@ -17,14 +119,14 @@ def split_prompt_and_response(input_text):
     Returns:
     prompt: everything up to and including the final "\n\nAssistant:"
     response: the assistant completion after that tag (no leading newline)
-    
+
     """
     input_text = str(input_text).replace("\r\n", "\n").replace("\r", "\n")
     index = input_text.rfind(ASSISTANT_TAG)
     if index < 0:
         raise ValueError("No '\\n\\nAssistant:' tag found in HH input.")
-    prompt = input_text[:index + len(ASSISTANT_TAG)]
-    response = input_text[index + len(ASSISTANT_TAG):]
+    prompt = input_text[: index + len(ASSISTANT_TAG)]
+    response = input_text[index + len(ASSISTANT_TAG) :]
     response = strip_one_leading_newline(response)
     return prompt, response
 
@@ -41,33 +143,34 @@ def convert_to_triples(chosen_text, rejected_text):
     # assume the chosen and rejected prompts are same
     if not rejected_text.startswith(chosen_prompt):
         return None
-    
-    rejected_response = strip_one_leading_newline(rejected_text[len(chosen_prompt):])
-    
-    
+
+    rejected_response = strip_one_leading_newline(rejected_text[len(chosen_prompt) :])
+
     if len(chosen_prompt.strip()) == 0:
         return None
     if len(chosen_response.strip()) == 0 or len(rejected_response.strip()) == 0:
         return None
-    
-    return {"prompt": chosen_prompt,
-            "chosen": chosen_response,
-            "rejected": rejected_response}
+
+    return {
+        "prompt": chosen_prompt,
+        "chosen": chosen_response,
+        "rejected": rejected_response,
+    }
+
 
 # process entire dataset, build hh dataset
 def build_HH_dataset(ds):
     hh_ds_raw = []
     for idx, row in enumerate(ds):
         output = convert_to_triples(
-            chosen_text = row['chosen'],
-            rejected_text = row['rejected']
+            chosen_text=row["chosen"], rejected_text=row["rejected"]
         )
         if output is not None:
             hh_ds_raw.append(output)
     return Dataset.from_list(hh_ds_raw)
 
 
-def collate_fn(batch, tokenizer, max_len):
+def collate_fn(batch, tokenizer, max_len, use_chat_template=False):
     """
     Input: list of triplets:
       {prompt, chosen, rejected}
@@ -77,6 +180,8 @@ def collate_fn(batch, tokenizer, max_len):
       rejected_input_ids, rejected_attention_mask, rejected_labels
       prompt_length
 
+    If use_chat_template is True, applies tokenizer's chat template to convert
+    HH format to model-specific format (e.g., Llama 3).
     """
 
     chosen_txt, rejected_txt = [], []
@@ -87,9 +192,13 @@ def collate_fn(batch, tokenizer, max_len):
         tokenizer.pad_token = tokenizer.eos_token
 
     for item in batch:
-        prompt = str(item['prompt'])
-        chosen = str(item['chosen'])
-        rejected = str(item['rejected'])
+        # Apply chat template conversion if enabled
+        if use_chat_template:
+            item = apply_chat_template_to_triplet(item, tokenizer)
+
+        prompt = str(item["prompt"])
+        chosen = str(item["chosen"])
+        rejected = str(item["rejected"])
 
         chosen_txt.append(prompt + chosen)
         rejected_txt.append(prompt + rejected)
@@ -124,7 +233,9 @@ def collate_fn(batch, tokenizer, max_len):
         and enc_chosen.input_ids[0, 0].item() == tokenizer.bos_token_id
     )
     bos_shift = 1 if has_bos else 0
-    prompt_length = torch.tensor([pl + bos_shift for pl in prompt_lens], dtype=torch.long)
+    prompt_length = torch.tensor(
+        [pl + bos_shift for pl in prompt_lens], dtype=torch.long
+    )
 
     # Build labels: input_ids with prompt tokens masked to -100
     chosen_labels = enc_chosen.input_ids.clone()
@@ -144,36 +255,37 @@ def collate_fn(batch, tokenizer, max_len):
         "chosen_input_ids": enc_chosen.input_ids,
         "chosen_attention_mask": enc_chosen.attention_mask,
         "chosen_labels": chosen_labels,
-
         "rejected_input_ids": enc_rejected.input_ids,
         "rejected_attention_mask": enc_rejected.attention_mask,
         "rejected_labels": rejected_labels,
-
         # optional: useful for debugging / analysis
         "prompt_length": prompt_length,
     }
 
+
 # build distributed train, eval dataloader
 def build_train_val_dist(config, tokenizer, rank, world_size):
-    ds_cfg = config['dataset']
-    raw_dataset = ds_cfg['dataset_name']
-    split = ds_cfg['subset']
-    val_ratio = float(ds_cfg['val_ratio'])
-    seed = int(ds_cfg['seed'])
-    max_len = int(ds_cfg['max_len'])
-    batch_size = int(config['dpo_training']['batch_size'])
+    ds_cfg = config["dataset"]
+    raw_dataset = ds_cfg["dataset_name"]
+    split = ds_cfg["subset"]
+    val_ratio = float(ds_cfg["val_ratio"])
+    seed = int(ds_cfg["seed"])
+    max_len = int(ds_cfg["max_len"])
+    use_chat_template = ds_cfg.get("use_chat_template", False)
+    batch_size = int(config["dpo_training"]["batch_size"])
 
-    ds = load_dataset(
-        raw_dataset, 
-        data_dir="harmless-base",
-        split=split
-        )
+    ds = load_dataset(raw_dataset, data_dir="harmless-base", split=split)
     ds_triple = build_HH_dataset(ds)
 
     split_ds = ds_triple.train_test_split(test_size=val_ratio, seed=seed)
     train_ds_raw, val_ds_raw = split_ds["train"], split_ds["test"]
 
-    ds_collate = partial(collate_fn, tokenizer=tokenizer, max_len=max_len)
+    ds_collate = partial(
+        collate_fn,
+        tokenizer=tokenizer,
+        max_len=max_len,
+        use_chat_template=use_chat_template,
+    )
 
     train_sampler = DistributedSampler(
         train_ds_raw, num_replicas=world_size, rank=rank, shuffle=True, drop_last=False

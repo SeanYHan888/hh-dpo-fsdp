@@ -1,0 +1,62 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.cache/
+.ipynb_checkpoints/
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Virtual environments
+.venv/
+.venv
+.env
+.env.*
+
+# Experiment outputs
+logs/
+rollout_output/
+dpo_model/
+sft_model/
+trl_dynamic_beta_out/
+wandb/
+
+# Model-judge outputs
+test/gpt_judge/data/
+test/gpt_judge/outputs/
+test/gpt_judge/results/
+test/gpt_judge/visualizations/
+
+
+# Model-judge outputs
+test/gpt_judge_TLDR/data/
+test/gpt_judge_TLDR/outputs/
+test/gpt_judge_TLDR/results/
+test/gpt_judge_TLDR/visualizations/
+
+# Archive and legacy folders
+archive/
+beta_dpo_V2/
+
+# Additional outputs
+beta_dpo_out/
+trl_dynamic_beta_dpo/
+debug_logs/
+
+# Egg info
+*.egg-info/
+dynamic_dpo_v1.egg-info/
+
+
+notes/

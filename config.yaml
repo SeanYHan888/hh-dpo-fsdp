@@ -8,6 +8,7 @@ dataset:
   val_ratio: 0.1
   seed: 42
   max_len: 512
+  use_chat_template: true  # Set to true for Llama 3 format
   
 dpo_training:
   epochs: 1
@@ -39,3 +40,7 @@ HH_test:
 vllm:
   tensor_parallel_size: 1
   chunk_size: 32
+
+huggingface:
+  model_repo: "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.1"  # HF repo name for model upload
+  logs_repo: "W-61/hh-dpo-logs-beta-0.1"     # HF repo name for logs upload

@@ -3,5 +3,19 @@ name = "fsdp-2"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = [
+    "transformers",
+    "datasets",
+    "tokenizers",
+    "accelerate",
+    "peft",
+    "trl",
+    "tqdm",
+    "matplotlib",
+    "scipy",
+    "wandb",
+    "numpy",
+    "openai",
+    "vllm; sys_platform == 'linux'",
+]
