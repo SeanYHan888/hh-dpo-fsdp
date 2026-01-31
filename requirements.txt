@@ -1,0 +1,13 @@
+transformers
+datasets
+tokenizers
+accelerate 
+peft
+trl
+tqdm
+matplotlib
+scipy
+wandb
+numpy
+vllm
+openai
