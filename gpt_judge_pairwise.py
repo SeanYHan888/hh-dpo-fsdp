@@ -85,10 +85,18 @@ def extract_output_text(resp: Any) -> str:
     if isinstance(out, list):
         parts = []
         for item in out:
-            content = item.get("content") if isinstance(item, dict) else getattr(item, "content", None)
+            content = (
+                item.get("content")
+                if isinstance(item, dict)
+                else getattr(item, "content", None)
+            )
             if isinstance(content, list):
                 for c in content:
-                    txt = c.get("text") if isinstance(c, dict) else getattr(c, "text", None)
+                    txt = (
+                        c.get("text")
+                        if isinstance(c, dict)
+                        else getattr(c, "text", None)
+                    )
                     if isinstance(txt, str) and txt.strip():
                         parts.append(txt.strip())
         if parts:
@@ -110,7 +118,9 @@ def safe_parse_json(text: str) -> Dict[str, Any]:
         raise
 
 
-def infer_model_and_chosen_ids(a_id: str, b_id: str, chosen_id_default: str = "hh_chosen") -> Tuple[str, str]:
+def infer_model_and_chosen_ids(
+    a_id: str, b_id: str, chosen_id_default: str = "hh_chosen"
+) -> Tuple[str, str]:
     """
     Infer which side label corresponds to "model" vs "chosen".
     Assumes chosen_id is usually 'hh_chosen'. If not present, fallback: model is the non-chosen label.
@@ -140,21 +150,23 @@ def map_winner_to_model_vs_chosen(
     Uses (a_id,b_id) and is_swapped to avoid confusion.
     Returns: (winner_model_vs_chosen, model_id, chosen_id_used)
     """
-    model_id, chosen_id_used = infer_model_and_chosen_ids(a_id, b_id, chosen_id_default=chosen_id)
+    model_id, chosen_id_used = infer_model_and_chosen_ids(
+        a_id, b_id, chosen_id_default=chosen_id
+    )
 
     if winner_ab == "tie":
         return "tie", model_id, chosen_id_used
 
     # Determine which response (A or B) is the model in THIS record:
     # If a_id == model_id -> A is model else if b_id == model_id -> B is model
-    a_is_model = (a_id == model_id)
-    b_is_model = (b_id == model_id)
+    a_is_model = a_id == model_id
+    b_is_model = b_id == model_id
 
     # If IDs are weird and both false (rare), fallback to is_swapped convention:
     # is_swapped==False: A=model; True: B=model (because swap flips)
     if not a_is_model and not b_is_model:
-        a_is_model = (not is_swapped)
-        b_is_model = (is_swapped)
+        a_is_model = not is_swapped
+        b_is_model = is_swapped
 
     if winner_ab == "a":
         return ("model" if a_is_model else "chosen"), model_id, chosen_id_used
@@ -211,11 +223,19 @@ def main():
     ap.add_argument("--in_file", required=True, help="pairwise JSONL input")
     ap.add_argument("--out_file", required=True, help="judged JSONL output")
     ap.add_argument("--model", default="gpt-4o-mini", help="judge model name")
-    ap.add_argument("--rate_sleep", type=float, default=0.2, help="sleep between requests")
+    ap.add_argument(
+        "--rate_sleep", type=float, default=0.2, help="sleep between requests"
+    )
     ap.add_argument("--max_retries", type=int, default=5)
-    ap.add_argument("--no_explain", action="store_true", help="do not store explanation")
-    ap.add_argument("--keep_raw", action="store_true", help="store judge_raw text for debugging")
-    ap.add_argument("--chosen_id", default="hh_chosen", help="label used for chosen side")
+    ap.add_argument(
+        "--no_explain", action="store_true", help="do not store explanation"
+    )
+    ap.add_argument(
+        "--keep_raw", action="store_true", help="store judge_raw text for debugging"
+    )
+    ap.add_argument(
+        "--chosen_id", default="hh_chosen", help="label used for chosen side"
+    )
     args = ap.parse_args()
 
     if not os.environ.get("OPENAI_API_KEY"):
@@ -232,14 +252,14 @@ def main():
 
     examples = list(iter_jsonl(in_path))
     total = len(examples)
-    
+
     with out_path.open("w", encoding="utf-8") as f_out:
         for line_no, ex in tqdm(
             examples,
             total=total,
             desc="GPT judging",
             dynamic_ncols=True,
-            ):
+        ):
             idx = ex.get("idx", line_no)
             prompt = ex.get("prompt", "")
             a = ex.get("a", "")

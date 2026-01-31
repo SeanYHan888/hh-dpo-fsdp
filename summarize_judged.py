@@ -3,13 +3,14 @@ import argparse
 from pathlib import Path
 from math import sqrt
 
+
 def wilson_ci(k, n, z=1.96):
     if n == 0:
         return (0.0, 0.0)
     phat = k / n
     denom = 1 + z**2 / n
-    center = (phat + z**2 / (2*n)) / denom
-    margin = z * sqrt((phat*(1-phat) + z**2/(4*n)) / n) / denom
+    center = (phat + z**2 / (2 * n)) / denom
+    margin = z * sqrt((phat * (1 - phat) + z**2 / (4 * n)) / n) / denom
     return center - margin, center + margin
 
 
@@ -30,7 +31,7 @@ def main():
             total += 1
 
             # expected field from gpt_judge_pairwise.py
-            result = ex["winner"]   # "a", "b", or "tie"
+            result = ex["winner"]  # "a", "b", or "tie"
 
             if result == "a":
                 win += 1

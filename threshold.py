@@ -1,5 +1,6 @@
 import torch
-    
+
+
 # warmup iteration
 class WarmupQuantileAccumulator:
     """
@@ -9,6 +10,7 @@ class WarmupQuantileAccumulator:
     where typically q = 1 - delta, so that P(M >= tau) ~ delta.
 
     """
+
     def __init__(self, q):
         self.q = q
         self._buf: list[torch.Tensor] = []
@@ -20,14 +22,15 @@ class WarmupQuantileAccumulator:
         if t.numel() == 0:
             return
         self._buf.append(t.cpu())
-        
+
     def finalize(self):
         if len(self._buf) == 0:
             return 0.0
         all_m = torch.cat(self._buf, dim=0)
         tau0 = torch.quantile(all_m, self.q).item()
-        return float(tau0)  
-    
+        return float(tau0)
+
+
 # EMA
 class EMAUpdate:
     def __init__(self, tau_0, q, momentum):
@@ -35,7 +38,7 @@ class EMAUpdate:
         self.q = q
         self.lam = momentum
 
-    # threshold tau equations    
+    # threshold tau equations
     def update_tau(self, batch_margins: torch.Tensor):
         t = batch_margins.detach().float().view(-1)
         if t.numel() == 0:

@@ -15,7 +15,7 @@ api.upload_folder(
     folder_path=local_dir,
     repo_id=repo_id,
     repo_type="model",
-    commit_message="DPO fine-tuned LLaMA-3 8B (HH, seed=42)"
+    commit_message="DPO fine-tuned LLaMA-3 8B (HH, seed=42)",
 )
 
 print("Uploaded model to HF:", repo_id)
