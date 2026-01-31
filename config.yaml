@@ -17,7 +17,7 @@ dpo_training:
   log_steps: 10
   warmup_steps: 60
   max_grad_norm: 10
-  dpo_beta: 0.1
+  dpo_beta: 0.001
   save_dir: dpo_model
 
 tail_test:
@@ -42,5 +42,5 @@ vllm:
   chunk_size: 32
 
 huggingface:
-  model_repo: "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.1"  # HF repo name for model upload
-  logs_repo: "W-61/hh-dpo-logs-beta-0.1"     # HF repo name for logs upload
+  model_repo: "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.001"  # HF repo name for model upload
+  logs_repo: "W-61/hh-dpo-logs-beta-0.001"     # HF repo name for logs upload
