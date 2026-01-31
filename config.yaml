@@ -15,7 +15,7 @@ dpo_training:
   batch_size: 16
   learning_rate: 5e-7
   log_steps: 10
-  warmup_steps: 120
+  warmup_steps: 60
   max_grad_norm: 10
   dpo_beta: 0.1
   save_dir: dpo_model
