@@ -196,7 +196,7 @@ def train():
     # policy: load on CPU then wrap with FSDP (do NOT .to(device) before FSDP)
     policy = AutoModelForCausalLM.from_pretrained(
         policy_name,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map=None,
     )
 
@@ -208,7 +208,7 @@ def train():
 
     # ref model: no grad, keep as normal model on each GPU
     ref_model = AutoModelForCausalLM.from_pretrained(
-        ref_model_name, torch_dtype=torch.bfloat16
+        ref_model_name, dtype=torch.bfloat16
     )
     ref_model.eval()
     for param in ref_model.parameters():
@@ -478,7 +478,7 @@ def train():
     if is_rank0:
         base_model = AutoModelForCausalLM.from_pretrained(
             policy_name,
-            torch_dtype=torch.float32,
+            dtype=torch.float32,
         )
         base_model.load_state_dict(cpu_state, strict=False)
         base_model.save_pretrained(save_dir)
