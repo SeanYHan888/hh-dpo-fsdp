@@ -16,9 +16,12 @@ echo "=================================="
 echo "[1/4] Syncing dependencies..."
 uv sync
 
+# Activate virtual environment
+source .venv/bin/activate
+
 # Run distributed training
 echo "[2/4] Starting DPO training..."
-torchrun --nproc_per_node=$NUM_GPUS training.py --config $CONFIG_FILE
+uv run torchrun --nproc_per_node=$NUM_GPUS training.py --config $CONFIG_FILE
 
 echo "[3/4] Training complete!"
 
