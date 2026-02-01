@@ -58,5 +58,14 @@ debug_logs/
 *.egg-info/
 dynamic_dpo_v1.egg-info/
 
+beta=0.1/
 
+outputs/
+results/
+# gpt_judge_hh_final data
+gpt_judge_hh_final/outputs/
+gpt_judge_hh_final/results/
+gpt_judge_hh_final/outputs.zip
+
+# notes folder
 notes/
