@@ -1,0 +1,15 @@
+# GPT-4o Judge Pipeline Requirements
+# ====================================
+
+# Core dependencies
+datasets>=2.14.0
+transformers>=4.36.0
+pyyaml>=6.0
+tqdm>=4.65.0
+numpy>=1.24.0
+
+# vLLM for fast inference
+vllm>=0.4.0
+
+# OpenAI API for GPT-4o judging
+openai>=1.0.0
