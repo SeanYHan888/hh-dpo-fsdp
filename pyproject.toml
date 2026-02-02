@@ -18,4 +18,5 @@ dependencies = [
     "numpy",
     "openai",
     "vllm; sys_platform == 'linux'",
+    "hf_transfer"
 ]
