@@ -56,6 +56,60 @@ python judge_gpt4o.py \
     --model_b_name "hh_chosen"
 ```
 
+## HF Multi-Model Judge (Base vs Betas)
+
+This script downloads multi-model output files from a Hugging Face dataset repo
+and runs base-vs-beta comparisons for each subfolder.
+
+### Install dependency
+
+```bash
+pip install huggingface_hub
+```
+
+### Run (default repo + subfolders)
+
+```bash
+python judge_hf_multimodel.py \
+    --config config.yaml
+```
+
+### Outputs
+
+Results go to:
+
+```
+results/hf_judgments/
+  do_sample_true_base_vs_beta_0.01.jsonl
+  do_sample_true_base_vs_beta_0.1.jsonl
+  do_sample_true_base_vs_beta_0.8.jsonl
+  do_sample_false_base_vs_beta_0.01.jsonl
+  do_sample_false_base_vs_beta_0.1.jsonl
+  do_sample_false_base_vs_beta_0.8.jsonl
+  summary/
+    do_sample_true/
+      summary_do_sample_true_base_vs_beta_0.01.json
+      summary_do_sample_true_base_vs_beta_0.1.json
+      summary_do_sample_true_base_vs_beta_0.8.json
+    do_sample_false/
+      summary_do_sample_false_base_vs_beta_0.01.json
+      summary_do_sample_false_base_vs_beta_0.1.json
+      summary_do_sample_false_base_vs_beta_0.8.json
+```
+
+### Common options
+
+```bash
+python judge_hf_multimodel.py \
+    --config config.yaml \
+    --repo_id W-61/hh-dpo-multi-model-outputs \
+    --subfolders do_sample_true,do_sample_false \
+    --output_dir results/hf_judgments \
+    --local_dir outputs/hf_multi \
+    --max_instances 500 \
+    --resume
+```
+
 ## Files
 
 | File | Description |
@@ -64,6 +118,7 @@ python judge_gpt4o.py \
 | `extract_chosen.py` | Extract HH human-preferred responses |
 | `generate_vllm.py` | Generate model outputs using vLLM |
 | `judge_gpt4o.py` | Pairwise judging with GPT-4o |
+| `judge_hf_multimodel.py` | Judge HF multi-model outputs (base vs betas) |
 | `config.yaml` | Pipeline configuration |
 
 ## Output Format

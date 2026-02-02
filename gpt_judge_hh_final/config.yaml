@@ -34,7 +34,7 @@ vllm:
 
 # GPT-4o Judge settings
 gpt4_oracle:
-  model: "gpt-4o-2024-08-06"
+  model: "gpt-5-mini"
   temperature: null # null = let API decide
   max_tokens: 256
   max_instances: null # null = use all examples

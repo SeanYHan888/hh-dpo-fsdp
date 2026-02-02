@@ -124,8 +124,11 @@ def call_gpt4o(
             kwargs = {
                 "model": model,
                 "messages": messages,
-                "max_tokens": max_tokens,
             }
+            if model.startswith("gpt-5"):
+                kwargs["max_completion_tokens"] = max_tokens
+            else:
+                kwargs["max_tokens"] = max_tokens
             if temperature is not None:
                 kwargs["temperature"] = temperature
 
