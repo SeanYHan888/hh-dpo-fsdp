@@ -23,6 +23,7 @@ from utils import (
     extract_instruction_from_prompt,
     format_prompt,
     load_hh_single_turn_instructions,
+    parse_hh_to_messages,
 )
 
 
@@ -129,6 +130,7 @@ def main():
     else:
         do_sample = bool(do_sample)
     apply_chat_template = gen_cfg.get("apply_chat_template", True)
+    single_turn_only = gen_cfg.get("single_turn_only", True)
 
     # Load tokenizer for prompt formatting
     try:
@@ -141,7 +143,7 @@ def main():
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Load HH dataset and extract single-turn instructions
+    # Load HH dataset and extract instructions
     raw_hh = load_dataset(dataset_repo, data_dir=data_dir, split=dataset_split)
     hh_ds = build_hh_dataset(raw_hh)
     if seed:
@@ -150,18 +152,40 @@ def main():
     instructions = []
     raw_prompts = []
     for ex in hh_ds:
-        instr = extract_instruction_from_prompt(ex.get("prompt", ""))
-        if instr is None:
+        prompt = ex.get("prompt", "")
+        if not prompt:
             continue
-        instructions.append(instr)
-        raw_prompts.append(format_prompt(tokenizer, instr, apply_chat_template))
+
+        if single_turn_only:
+            instr = extract_instruction_from_prompt(prompt)
+            if instr is None:
+                continue
+            instruction_key = instr
+            raw_prompt = format_prompt(tokenizer, instr, apply_chat_template)
+        else:
+            instruction_key = prompt
+            if apply_chat_template and getattr(tokenizer, "apply_chat_template", None) and tokenizer.chat_template:
+                messages = parse_hh_to_messages(prompt)
+                raw_prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            else:
+                raw_prompt = prompt
+
+        instructions.append(instruction_key)
+        raw_prompts.append(raw_prompt)
         if max_instances and len(instructions) >= max_instances:
             break
 
     if not instructions:
-        raise ValueError("No single-turn HH examples found")
+        raise ValueError(
+            "No HH examples found"
+            if not single_turn_only
+            else "No single-turn HH examples found"
+        )
 
-    print(f"Loaded {len(instructions)} single-turn instructions")
+    mode_label = "single-turn" if single_turn_only else "multi-turn"
+    print(f"Loaded {len(instructions)} {mode_label} instructions")
 
     # Build vLLM model
     llm = build_vllm_model(

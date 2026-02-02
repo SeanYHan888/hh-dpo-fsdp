@@ -24,6 +24,7 @@ generation:
   temperature: 0.0
   top_p: 0.9
   apply_chat_template: true
+  single_turn_only: true  # true = single-turn only, false = allow multi-turn prompts
 
 # vLLM settings
 vllm:

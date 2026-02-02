@@ -68,28 +68,35 @@ def main():
     split = args.dataset_split or gen_cfg.get("dataset_split", "test")
     max_instances = args.max_instances or gen_cfg.get("max_instances")
     seed = gen_cfg.get("seed", 42)
+    single_turn_only = gen_cfg.get("single_turn_only", True)
     output_file = args.output_file or gen_cfg.get(
         "chosen_output_file", "outputs/hh_chosen_outputs.json"
     )
 
     outputs = []
+    use_raw_hh = args.use_raw_hh or not single_turn_only
 
-    if args.use_raw_hh:
-        # Use build_hh_dataset for raw HH triplet processing
+    if use_raw_hh:
+        # Use build_hh_dataset for raw HH triplet processing (required for multi-turn)
         raw_hh = load_dataset(dataset_repo, data_dir=data_dir, split=split)
         hh_ds = build_hh_dataset(raw_hh).shuffle(seed=seed)
         if max_instances:
             hh_ds = hh_ds.select(range(min(max_instances, len(hh_ds))))
 
         for row in hh_ds:
-            # Extract instruction from prompt (ending with Assistant:)
             prompt = row.get("prompt", "")
-            # For raw HH, we need to parse the prompt to get instruction
-            messages = parse_hh_to_messages(prompt)
-            if len(messages) == 1 and messages[0]["role"] == "user":
-                instruction = messages[0]["content"]
-            else:
+            if not prompt:
                 continue
+
+            if single_turn_only:
+                # For raw HH, we need to parse the prompt to get single-turn instruction
+                messages = parse_hh_to_messages(prompt)
+                if len(messages) == 1 and messages[0]["role"] == "user":
+                    instruction = messages[0]["content"]
+                else:
+                    continue
+            else:
+                instruction = prompt
 
             response = str(row["chosen"]).lstrip()
             outputs.append(
