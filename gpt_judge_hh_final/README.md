@@ -74,7 +74,53 @@ python judge_hf_multimodel.py \
     --config config.yaml
 ```
 
-### Outputs
+## HF Multi-Model Judge (Beta vs Beta)
+
+This script compares beta checkpoints directly within each subfolder.
+
+### Run (default repo + subfolders)
+
+```bash
+python judge_hf_multimodel_betapairs.py \
+    --config config.yaml
+```
+
+### Examples
+
+Run only do_sample_true:
+
+```bash
+python judge_hf_multimodel_betapairs.py \
+    --config config.yaml \
+    --subfolders do_sample_true
+```
+
+Run explicit beta pairs:
+
+```bash
+python judge_hf_multimodel_betapairs.py \
+    --config config.yaml \
+    --subfolders do_sample_false \
+    --pairs 0.1:0.01,0.01:0.8,0.1:0.8
+```
+
+### Outputs (Beta vs Beta)
+
+Results go to:
+
+```
+results/hf_judgments/beta_pairs/
+  do_sample_true_beta_0.01_vs_beta_0.1.jsonl
+  do_sample_true_beta_0.01_vs_beta_0.8.jsonl
+  do_sample_true_beta_0.1_vs_beta_0.8.jsonl
+  summary/
+    do_sample_true/
+      summary_do_sample_true_beta_0.01_vs_beta_0.1.json
+      summary_do_sample_true_beta_0.01_vs_beta_0.8.json
+      summary_do_sample_true_beta_0.1_vs_beta_0.8.json
+```
+
+### Outputs (Base vs Betas)
 
 Results go to:
 
@@ -119,6 +165,7 @@ python judge_hf_multimodel.py \
 | `generate_vllm.py` | Generate model outputs using vLLM |
 | `judge_gpt4o.py` | Pairwise judging with GPT-4o |
 | `judge_hf_multimodel.py` | Judge HF multi-model outputs (base vs betas) |
+| `judge_hf_multimodel_betapairs.py` | Judge HF multi-model outputs (beta vs beta) |
 | `config.yaml` | Pipeline configuration |
 
 ## Output Format

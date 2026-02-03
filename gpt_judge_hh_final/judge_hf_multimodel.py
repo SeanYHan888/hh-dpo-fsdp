@@ -25,16 +25,6 @@ def list_repo_files(repo_id: str) -> List[str]:
     return api.list_repo_files(repo_id, repo_type="dataset")
 
 
-def list_local_files(local_dir: Path) -> List[str]:
-    files = []
-    if not local_dir.exists():
-        return files
-    for path in local_dir.rglob("*"):
-        if path.is_file():
-            files.append(path.relative_to(local_dir).as_posix())
-    return files
-
-
 def group_files_by_subfolder(files: List[str], subfolders: List[str]) -> Dict[str, List[str]]:
     grouped = {name: [] for name in subfolders}
     for path in files:
@@ -52,7 +42,6 @@ def resolve_outputs(
     local_dir: Path,
     base_name: str,
     beta_regex: str,
-    use_cache: bool,
 ) -> Tuple[Path, List[Tuple[str, Path]]]:
     base_path = None
     beta_re = re.compile(beta_regex)
@@ -61,33 +50,27 @@ def resolve_outputs(
     for path in subfolder_files:
         filename = path.split("/")[-1]
         if filename == base_name:
-            if use_cache:
-                base_path = local_dir / path
-            else:
-                base_path = Path(
-                    hf_hub_download(
-                        repo_id=repo_id,
-                        repo_type="dataset",
-                        filename=path,
-                        local_dir=str(local_dir),
-                    )
+            base_path = Path(
+                hf_hub_download(
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    filename=path,
+                    local_dir=str(local_dir),
                 )
+            )
             continue
 
         match = beta_re.match(filename)
         if match:
             beta_value = match.group(1)
-            if use_cache:
-                beta_path = local_dir / path
-            else:
-                beta_path = Path(
-                    hf_hub_download(
-                        repo_id=repo_id,
-                        repo_type="dataset",
-                        filename=path,
-                        local_dir=str(local_dir),
-                    )
+            beta_path = Path(
+                hf_hub_download(
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    filename=path,
+                    local_dir=str(local_dir),
                 )
+            )
             beta_paths.append((beta_value, beta_path))
 
     if base_path is None:
@@ -240,7 +223,7 @@ def main() -> None:
     parser.add_argument(
         "--repo_id",
         type=str,
-        default="W-61/hh-dpo-multi-model-outputs",
+        default="W-61/hh-dpo-multi-model-outputs-multi-turn",
         help="HF dataset repo id",
     )
     parser.add_argument(
@@ -262,11 +245,6 @@ def main() -> None:
         help="Local download directory for HF files",
     )
     parser.add_argument(
-        "--use_cache",
-        action="store_true",
-        help="Use local_dir files directly and skip HF API calls",
-    )
-    parser.add_argument(
         "--base_name",
         type=str,
         default="model_outputs_base.json",
@@ -281,8 +259,8 @@ def main() -> None:
     parser.add_argument(
         "--judge_model",
         type=str,
-        default="gpt-5-mini",
-        help="Judge model name",
+        default=None,
+        help="Judge model name (overrides config)",
     )
     parser.add_argument("--max_instances", type=int, default=None)
     parser.add_argument(
@@ -300,6 +278,7 @@ def main() -> None:
     if not prompt_template:
         raise ValueError("gpt4_oracle.prompt_template must be set in config")
 
+    judge_model = args.judge_model or oracle_cfg.get("model") or "gpt-5-mini"
     temperature = oracle_cfg.get("temperature")
     max_tokens = oracle_cfg.get("max_tokens", 256)
     max_retries = oracle_cfg.get("max_retries", 5)
@@ -308,18 +287,11 @@ def main() -> None:
     system_prompt = oracle_cfg.get("system_prompt")
     seed = oracle_cfg.get("seed", 42)
 
-    local_dir = Path(args.local_dir)
-    if args.use_cache:
-        files = list_local_files(local_dir)
-        if not files:
-            raise FileNotFoundError(
-                f"No files found in local_dir: {local_dir}. Disable --use_cache to download."
-            )
-    else:
-        files = list_repo_files(args.repo_id)
+    files = list_repo_files(args.repo_id)
     subfolders = [name.strip() for name in args.subfolders.split(",") if name.strip()]
     grouped = group_files_by_subfolder(files, subfolders)
 
+    local_dir = Path(args.local_dir)
     output_dir = Path(args.output_dir)
 
     client = OpenAI()
@@ -335,7 +307,6 @@ def main() -> None:
             local_dir=local_dir,
             base_name=args.base_name,
             beta_regex=args.beta_regex,
-            use_cache=args.use_cache,
         )
 
         summary_dir = output_dir / "summary" / subfolder
@@ -348,7 +319,7 @@ def main() -> None:
             run_pairwise_judge(
                 client=client,
                 prompt_template=prompt_template,
-                model=args.judge_model,
+                model=judge_model,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 max_retries=max_retries,
