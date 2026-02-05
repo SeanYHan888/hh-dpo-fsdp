@@ -163,10 +163,10 @@ def main():
     parser.add_argument("--model_a", type=str, help="Path to model A outputs JSON")
     parser.add_argument("--model_b", type=str, help="Path to model B outputs JSON")
     parser.add_argument(
-        "--model_a_name", type=str, default="model_a", help="Model A label"
+        "--model_a_name", type=str, default=None, help="Model A label"
     )
     parser.add_argument(
-        "--model_b_name", type=str, default="model_b", help="Model B label"
+        "--model_b_name", type=str, default=None, help="Model B label"
     )
     parser.add_argument("--results_file", type=str, help="Override results output path")
     parser.add_argument("--summary_file", type=str, help="Override summary output path")

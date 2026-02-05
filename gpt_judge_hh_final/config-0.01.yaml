@@ -67,12 +67,12 @@ gpt4_oracle:
 
 # Input paths for judging
 inputs:
-  model_a: "outputs/hf_multi/do_sample_false/model_outputs_beta_0.1.json"
+  model_a: "outputs/hf_multi/do_sample_false/model_outputs_beta_0.01.json"
   model_b: "outputs/hh_chosen_outputs.json"
-  model_a_name: "model-beta-0.1"
+  model_a_name: "model-beta-0.01"
   model_b_name: "HH:chosen" 
 
 # Output paths
 output:
-  results_file: "results/judgments_beta_0.1_vs_hh_chosen.jsonl"
-  summary_file: "results/summary_beta_0.1_vs_hh_chosen.json"
+  results_file: "results/judgments_beta_0.01_vs_hh_chosen.jsonl"
+  summary_file: "results/summary_beta_0.01_vs_hh_chosen.json"

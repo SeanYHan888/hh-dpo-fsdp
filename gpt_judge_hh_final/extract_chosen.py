@@ -14,6 +14,7 @@ from datasets import load_dataset
 
 from utils import (
     build_hh_dataset,
+    extract_instruction_from_prompt,
     extract_single_turn_instruction,
     parse_hh_to_messages,
 )
@@ -32,6 +33,23 @@ def extract_single_turn_pair(text: str) -> Optional[tuple]:
     if messages[0]["role"] != "user" or messages[1]["role"] != "assistant":
         return None
     return messages[0]["content"], messages[1]["content"]
+
+
+def normalize_hh_prompt_key(prompt: str) -> str:
+    """Match the mixed instruction-key format used by model outputs.
+
+    - Strip leading whitespace to drop leading \\n\\n.
+    - If it's single-turn HH prompt, return just the user text.
+    - Otherwise return the full prompt (without leading whitespace).
+    """
+    prompt = str(prompt).replace("\r\n", "\n").replace("\r", "\n").lstrip()
+    if not prompt:
+        return prompt
+
+    # extract_instruction_from_prompt expects leading \\n\\n
+    detect = prompt if prompt.startswith("\n\n") else "\n\n" + prompt
+    single_turn = extract_instruction_from_prompt(detect)
+    return single_turn if single_turn is not None else prompt
 
 
 def main():
@@ -96,7 +114,7 @@ def main():
                 else:
                     continue
             else:
-                instruction = prompt
+                instruction = normalize_hh_prompt_key(prompt)
 
             response = str(row["chosen"]).lstrip()
             outputs.append(
