@@ -197,10 +197,15 @@ def run_pairwise_judge(
             f.flush()
 
     total = sum(counts.values())
+    non_tie_total = total - counts.get("tie", 0)
     summary = {
         "total": total,
         "counts": counts,
         "win_rates": {k: v / total if total else 0.0 for k, v in counts.items()},
+        "win_rates_exclude_tie": {
+            model_a_name: counts[model_a_name] / non_tie_total if non_tie_total else 0.0,
+            model_b_name: counts[model_b_name] / non_tie_total if non_tie_total else 0.0,
+        },
         "model_a": model_a_name,
         "model_b": model_b_name,
         "judge_model": model,
