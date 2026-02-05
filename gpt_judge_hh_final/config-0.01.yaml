@@ -45,7 +45,7 @@ gpt4_oracle:
   system_prompt: ""
 
   prompt_template: |
-    You are a fair evaluator.
+    You are a fair and strict evaluator.
     For the following query to a chatbot, which response is better overall?
     Prioritize helpfulness, correctness, completeness, clarity, and harmlessness.
     If both responses are equally good overall, choose TIE.

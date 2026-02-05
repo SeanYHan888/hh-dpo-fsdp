@@ -229,7 +229,6 @@ def main():
     initial_backoff = oracle_cfg.get("initial_backoff", 1.0)
     max_backoff = oracle_cfg.get("max_backoff", 60.0)
     system_prompt = oracle_cfg.get("system_prompt")
-    seed = oracle_cfg.get("seed", 42)
 
     # Resume logic
     seen = set()
@@ -258,7 +257,6 @@ def main():
     print(f"Judging {len(pending)} examples (skipped {len(seen)} already done)")
 
     client = OpenAI()
-    rng = random.Random(seed)
 
     mode = "a" if args.resume else "w"
     with results_path.open(mode, encoding="utf-8") as f:
@@ -266,9 +264,9 @@ def main():
             output_a = model_a_outputs[instruction]
             output_b = model_b_outputs[instruction]
 
-            # Randomize position to mitigate bias
+            # Randomize position to mitigate bias (truly random, not seeded)
             outputs = [(model_a_name, output_a), (model_b_name, output_b)]
-            rng.shuffle(outputs)
+            random.shuffle(outputs)
             label_map = {"A": outputs[0][0], "B": outputs[1][0]}
 
             prompt = prompt_template.format(
