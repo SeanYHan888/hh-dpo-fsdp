@@ -8,8 +8,8 @@ dataset:
   val_ratio: 0.1
   seed: 42
   max_len: 512
-  use_chat_template: true  # Set to true for Llama 3 format
-  
+  use_chat_template: true # Set to true for Llama 3 format
+
 dpo_training:
   epochs: 1
   batch_size: 16
@@ -17,7 +17,7 @@ dpo_training:
   log_steps: 10
   warmup_steps: 60
   max_grad_norm: 10
-  dpo_beta: 0.001
+  dpo_beta: 0.005
   save_dir: dpo_model
 
 tail_test:
@@ -42,5 +42,5 @@ vllm:
   chunk_size: 32
 
 huggingface:
-  model_repo: "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.001"  # HF repo name for model upload
-  logs_repo: "W-61/hh-dpo-logs-beta-0.001"     # HF repo name for logs upload
+  model_repo: "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.001" # HF repo name for model upload
+  logs_repo: "W-61/hh-dpo-logs-beta-0.001" # HF repo name for logs upload

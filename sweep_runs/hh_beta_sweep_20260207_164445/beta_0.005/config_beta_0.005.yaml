@@ -1,0 +1,41 @@
+policy_model: meta-llama/Llama-3.1-8B-Instruct
+ref_model: meta-llama/Llama-3.1-8B-Instruct
+precision: bf16
+dataset:
+  dataset_name: Anthropic/hh-rlhf
+  subset: train[:100%]
+  val_ratio: 0.1
+  seed: 42
+  max_len: 512
+  use_chat_template: true
+dpo_training:
+  epochs: 1
+  batch_size: 16
+  learning_rate: 5e-7
+  log_steps: 10
+  warmup_steps: 60
+  max_grad_norm: 10
+  dpo_beta: 0.005
+  save_dir: /Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.005/dpo_model
+tail_test:
+  delta: 0.1
+  lambda: 0.05
+  log_dir: /Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.005/logs/margins
+HH_test:
+  hh_test: Anthropic/hh-rlhf
+  seed: 42
+  num_sample: 500
+  max_prompt_length: 512
+  max_new_tokens: 256
+  temperature: 1.0
+  top_p: 0.9
+  do_sample: true
+  HH_test_policy_out: eval_outputs/policy_out.jsonl
+  HH_test_base_out: eval_outputs/base_out.jsonl
+vllm:
+  tensor_parallel_size: 1
+  chunk_size: 32
+huggingface:
+  model_repo: W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.005
+  logs_repo: W-61/hh-dpo-logs-beta-0.005
+run_name: hh-dpo-llama3.1-8b-fsdp-beta-0.005

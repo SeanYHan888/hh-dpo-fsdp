@@ -101,7 +101,7 @@ results/hf_judgments/
 
 ```bash
 python judge_hf_multimodel.py \
-    --config config.yaml \
+    --config config.yaml \_hf_
     --repo_id W-61/hh-dpo-multi-model-outputs \
     --subfolders do_sample_true,do_sample_false \
     --output_dir results/hf_judgments \

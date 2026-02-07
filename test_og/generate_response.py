@@ -5,8 +5,15 @@ import random
 from datasets import load_dataset
 from tqdm import tqdm
 import os
+import sys
 import yaml
 import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from process_hh_dataset import build_HH_dataset
 import argparse
 from vllm import LLM, SamplingParams

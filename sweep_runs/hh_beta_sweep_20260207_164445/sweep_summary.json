@@ -1,0 +1,26 @@
+{
+  "base_config": "/Users/seanmacbook/Research/dpo/fsdp 2/config.yaml",
+  "hf_org": "W-61",
+  "nproc_per_node": 4,
+  "dry_run": true,
+  "runs": [
+    {
+      "beta": "0.005",
+      "config": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.005/config_beta_0.005.yaml",
+      "save_dir": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.005/dpo_model",
+      "log_dir": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.005/logs/margins",
+      "model_repo": "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.005",
+      "logs_repo": "W-61/hh-dpo-logs-beta-0.005",
+      "status": "dry_run"
+    },
+    {
+      "beta": "0.008",
+      "config": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.008/config_beta_0.008.yaml",
+      "save_dir": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.008/dpo_model",
+      "log_dir": "/Users/seanmacbook/Research/dpo/fsdp 2/sweep_runs/hh_beta_sweep_20260207_164445/beta_0.008/logs/margins",
+      "model_repo": "W-61/hh-dpo-llama3.1-8b-fsdp-beta-0.008",
+      "logs_repo": "W-61/hh-dpo-logs-beta-0.008",
+      "status": "dry_run"
+    }
+  ]
+}

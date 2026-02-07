@@ -30,7 +30,7 @@ def main():
             ex = json.loads(line)
             total += 1
 
-            # expected field from gpt_judge_pairwise.py
+            # expected field from test_og/gpt_judge_pairwise.py
             result = ex["winner"]  # "a", "b", or "tie"
 
             if result == "a":

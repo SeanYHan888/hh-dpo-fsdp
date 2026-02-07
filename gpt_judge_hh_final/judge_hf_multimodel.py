@@ -35,7 +35,9 @@ def list_local_files(local_dir: Path) -> List[str]:
     return files
 
 
-def group_files_by_subfolder(files: List[str], subfolders: List[str]) -> Dict[str, List[str]]:
+def group_files_by_subfolder(
+    files: List[str], subfolders: List[str]
+) -> Dict[str, List[str]]:
     grouped = {name: [] for name in subfolders}
     for path in files:
         for name in subfolders:
@@ -240,7 +242,7 @@ def main() -> None:
     parser.add_argument(
         "--repo_id",
         type=str,
-        default="W-61/hh-dpo-multi-model-outputs",
+        default="W-61/hh-dpo-multi-model-outputs-multi-turn",
         help="HF dataset repo id",
     )
     parser.add_argument(
